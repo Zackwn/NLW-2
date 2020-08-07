@@ -1,28 +1,49 @@
-import React from 'react';
+import React, { FormEvent, useState } from 'react';
 
 import PageHeader from '../../components/PageHeader';
-import TeacherItem from '../../components/TeacherItem';
+import TeacherItem, { iTeacher } from '../../components/TeacherItem';
 import Input from '../../components/Input';
 import Select from '../../components/Select';
 
 import './styles.css'
-
-const Teacher = {
-    name: 'Rafael Azzi',
-    img: 'https://avatars0.githubusercontent.com/u/56268564?s=460&u=e173f8d14299f6b17927b793355eba472b7cc30d&v=4',
-    materia: 'Química',
-    descricao: 'Entusiasta das melhores tecnologias de química avançada.' + '\n' + '\n' + 'Apaixonado por explodir coisas em laboratório e por mudar a vida das pessoas através de experiências. Mais de 200.000 pessoas já passaram por uma das minha explosões.',
-    preco: '80.00'
-}
+import { api } from '../../services/api';
 
 const TeachersList: React.FC = () => {
+
+    const [subject, setSubject] = useState('')
+    const [week_day, setWeekDay] = useState<number>()
+    const [time, setTime] = useState('')
+
+    const [teachers, setTeachers] = useState<iTeacher[]>()
+
+    async function handleSearchTeachers(e: FormEvent) {
+        e.preventDefault()
+
+        try {
+            const response = await api.get<iTeacher[]>('/classes', {
+                params: {
+                    subject,
+                    week_day,
+                    time
+                }
+            })
+
+            setTeachers(response.data)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
     return (
         <div id='page-teacher-list' className='container' >
             <PageHeader title='Estes são os proffys disponíveis.'>
-                <div id="search-teachers">
+
+                <form id='search-teachers' onSubmit={handleSearchTeachers}>
                     <Select
                         name='subject'
                         label='Matéria'
+                        onChange={e => { setSubject(e.target.value) }}
+                        value={subject}
                         options={[
                             { value: 'Artes', label: 'Artes' },
                             { value: 'Matemática', label: 'Matemática' },
@@ -31,13 +52,16 @@ const TeachersList: React.FC = () => {
                             { value: 'Fisíca', label: 'Fisíca' },
                             { value: 'Educação fisíca', label: 'Educação fisíca' },
                             { value: 'Geografia', label: 'Geografia' },
-                            { value: 'História', label: 'História' }
+                            { value: 'História', label: 'História' },
+                            { value: 'Inglês', label: 'Inglês' }
                         ]}
                     />
 
                     <Select
                         name='week-day'
                         label='Dia da semana'
+                        onChange={e => { setWeekDay(Number(e.target.value)) }}
+                        value={week_day}
                         options={[
                             { value: '0', label: 'Domingo' },
                             { value: '1', label: 'Segunda-feira' },
@@ -49,14 +73,26 @@ const TeachersList: React.FC = () => {
                         ]}
                     />
 
-                    <Input name='time' label='Hora' type='time' />
-                </div>
+                    <Input
+                        name='time'
+                        label='Hora'
+                        type='time'
+                        onChange={e => { setTime(e.target.value) }}
+                        value={time}
+                    />
+
+                    <button type='submit'>
+                        Buscar
+                    </button>
+                </form>
             </PageHeader>
 
             <main>
-                <TeacherItem teacher={Teacher} />
-                <TeacherItem teacher={Teacher} />
-                <TeacherItem teacher={Teacher} />
+                {
+                    teachers?.map(teacher => (
+                        <TeacherItem key={teacher.id} teacher={teacher} />
+                    ))
+                }
             </main>
         </div>
     )
